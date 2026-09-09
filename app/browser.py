@@ -11,7 +11,7 @@ from urllib.parse import urlsplit, urlunsplit
 from playwright.async_api import Browser, BrowserContext, Page, Playwright, async_playwright
 
 from app.config import ConfigError, parse_auth_json
-from app.models import Settings
+from app.models import设置
 from app.selectors import (
     DOUYIN_CHAT_URL,
     LOGIN_MARKERS,
@@ -77,12 +77,26 @@ async def open_douyin(settings: Settings) -> AsyncIterator[BrowserSession]:
     context: BrowserContext | None = None
     try:
         playwright = await async_playwright().start()
-        launch_args = {"headless": settings.headless}
-        if settings.browser_path:
-            launch_args["executable_path"] = settings.browser_path
-        browser = await playwright.chromium.launch(**launch_args)
+        launch_args = {
+    "headless": settings.headless,
+    "args": [
+        "--disable-blink-features=AutomationControlled",
+        "--disable-features=IsolateOrigins,site-per-process",
+    ],
+}
+if settings.browser_path:
+    launch_args["executable_path"] = settings.browser_path
+browser = await playwright.chromium.launch(**launch_args)
 
-        context_args = {"viewport": {"width": 1440, "height": 1000}, "locale": "zh-CN"}
+
+        context_args = {
+    "viewport": {"width": 1440, "height": 900},
+    "locale": "zh-CN",
+    "timezone_id": "Asia/Shanghai",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+ "extra_http_headers": {"Accept-Language": "zh-CN,zh;q=0.9"},
+}
+
         if settings.storage_state:
             state = parse_auth_json(settings.storage_state, "DOUYIN_STORAGE_STATE")
             if not isinstance(state, dict):
@@ -96,6 +110,10 @@ async def open_douyin(settings: Settings) -> AsyncIterator[BrowserSession]:
             await context.add_cookies(_normalize_cookies(cookies))
 
         page = await context.new_page()
+        await page.add_init_script(
+    "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
+)
+
         if settings.trace:
             await context.tracing.start(screenshots=True, snapshots=True, sources=False)
         yield BrowserSession(page=page, context=context)
