@@ -73,8 +73,6 @@ class DouyinChat:
             '[class*="SearchPanelitemName"]',
             '[class*="SearchPanelitem_name"]',
             '[class*="SearchPanelitem-name"]',
-            '[class*="SearchPanelitemsearch_highlight"]',  
-            '[class*="SearchPanelitemsearchHighlight"]',
         )
 
         # Two-phase priority: an exact friend name always wins over a group whose
